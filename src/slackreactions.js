@@ -17,8 +17,10 @@ const {
 
 // Put in some debugging
 module.exports = function(robot) {
-  robot.react((res) => {
-    console.log('Reaction event received:', res.message);
+  robot.logger.info("slackreactions.js loaded");
+
+  robot.react(res => {
+    robot.logger.info("Reaction received:", res.message);
   });
 };
 
