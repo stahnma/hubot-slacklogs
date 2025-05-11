@@ -11,63 +11,87 @@
 // Category: workflow
 const fs = require('fs');
 const path = require('path');
-const {
-  WebClient
-} = require('@slack/web-api');
-
-// Put in some debugging
-module.exports = function(robot) {
-  robot.logger.info("slackreactions.js loaded");
-
-  robot.react(res => {
-    robot.logger.info("Reaction received:", res.message);
-  });
-};
+const { WebClient } = require('@slack/web-api');
 
 // Config
-const reactionsLogFilePath = process.env.HUBOT_SLACK_REACTIONS_LOGS_FILE || process.env.HUBOT_SLACK_LOGS_FILE;
+const reactionsLogFilePath =
+  process.env.HUBOT_SLACK_REACTIONS_LOGS_FILE ||
+  process.env.HUBOT_SLACK_LOGS_FILE;
 const slackToken = process.env.HUBOT_SLACK_TOKEN;
 
 let logStream = null;
-if(reactionsLogFilePath) {
+if (reactionsLogFilePath) {
   try {
     const dir = path.dirname(reactionsLogFilePath);
     fs.mkdirSync(dir, {
-      recursive: true
+      recursive: true,
     });
     logStream = fs.createWriteStream(reactionsLogFilePath, {
-      flags: 'a'
+      flags: 'a',
     });
-    console.log(`[hubot-reactions-logger] Logging to file: ${reactionsLogFilePath}`);
+    console.log(
+      `[hubot-reactions-logger] Logging to file: ${reactionsLogFilePath}`
+    );
   } catch (err) {
-    console.error(`[hubot-reactions-logger] Failed to set up log file: ${err.message}`);
+    console.error(
+      `[hubot-reactions-logger] Failed to set up log file: ${err.message}`
+    );
   }
 }
 
 const slackClient = slackToken ? new WebClient(slackToken) : null;
 
 module.exports = (robot) => {
-  if(robot.adapterName !== 'slack') {
-    console.log(`[hubot-reactions-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`);
+  if (robot.adapterName !== 'slack') {
+    robot.logger.info(
+      `[hubot-reactions-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`
+    );
     return;
   }
 
-  robot.on('reaction_added', async (reaction) => {
+  robot.logger.info('[hubot-reactions-logger] Reaction logging enabled');
+
+  // Listen for reactions using robot.react
+  robot.react((res) => {
+    handleReaction(res.message);
+  });
+
+  // Function to handle reaction logging
+  async function handleReaction(reaction) {
     try {
-      const userId = reaction.user;
-      const item = reaction.item;
-      const emoji = reaction.reaction;
+      // Handle both Hubot ReactionMessage and raw Slack API formats
+      let userId, item, emoji, reactionType;
+
+      if (reaction.user && typeof reaction.user === 'object' && reaction.user.id) {
+        // Hubot ReactionMessage format
+        userId = reaction.user.id;
+        item = reaction.item;
+        emoji = reaction.reaction;
+        reactionType = reaction.type; // 'added' or 'removed'
+      } else if (typeof reaction.user === 'string') {
+        // Raw Slack API format
+        userId = reaction.user;
+        item = reaction.item;
+        emoji = reaction.reaction;
+        reactionType = 'added'; // Default for raw format
+      } else {
+        robot.logger.error('[hubot-reactions-logger] Unknown reaction format:', reaction);
+        return;
+      }
+
       const timestamp = new Date().toISOString();
 
       let userName = null;
-      if(slackClient && userId) {
+      if (slackClient && userId) {
         try {
           const userInfo = await slackClient.users.info({
-            user: userId
+            user: userId,
           });
           userName = userInfo.user?.name || null;
         } catch (err) {
-          console.error(`[hubot-reactions-logger] Failed to fetch user info for ${userId}: ${err.message}`);
+          robot.logger.error(
+            `[hubot-reactions-logger] Failed to fetch user info for ${userId}: ${err.message}`
+          );
         }
       }
 
@@ -75,6 +99,7 @@ module.exports = (robot) => {
         user: userName,
         userId: userId,
         emoji: emoji,
+        reactionType: reactionType,
         itemType: item.type,
         itemChannel: item.channel || null,
         itemTimestamp: item.ts || null,
@@ -83,13 +108,17 @@ module.exports = (robot) => {
 
       const line = JSON.stringify(reactionLog);
 
-      if(logStream) {
+      if (logStream) {
         logStream.write(line + '\n');
       } else {
-        console.log(line);
+        // Log to Hubot's logger if no file is configured
+        robot.logger.info(`[hubot-reactions-logger] ${line}`);
       }
     } catch (err) {
-      console.error('[hubot-reactions-logger] Error while logging reaction:', err);
+      robot.logger.error(
+        '[hubot-reactions-logger] Error while logging reaction:',
+        err
+      );
     }
-  });
+  }
 };

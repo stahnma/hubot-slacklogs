@@ -34,12 +34,12 @@ const slackClient = slackToken ? new WebClient(slackToken) : null;
 const roomCache = new Map();
 
 function getSlackRoomType(roomId) {
-  if (!roomId || typeof roomId !== 'string') return 'unknown';
-  if (roomId.startsWith('C')) return 'public_channel';
-  if (roomId.startsWith('G')) return 'private_channel';
-  if (roomId.startsWith('D')) return 'direct_message';
-  if (roomId.startsWith('Q')) return 'group_dm';
-  if (roomId.startsWith('T')) return 'external_dm';
+  if (!roomId || typeof roomId !== 'string') {return 'unknown';}
+  if (roomId.startsWith('C')) {return 'public_channel';}
+  if (roomId.startsWith('G')) {return 'private_channel';}
+  if (roomId.startsWith('D')) {return 'direct_message';}
+  if (roomId.startsWith('Q')) {return 'group_dm';}
+  if (roomId.startsWith('T')) {return 'external_dm';}
   return 'unknown';
 }
 
@@ -61,21 +61,25 @@ async function getRoomInfo(roomId) {
     const roomType = result.channel?.is_im
       ? 'direct_message'
       : result.channel?.is_private
-      ? 'private_channel'
-      : 'public_channel';
+        ? 'private_channel'
+        : 'public_channel';
 
     const info = { name: roomName, type: roomType };
     roomCache.set(roomId, { info, fetchedAt: now });
     return info;
   } catch (err) {
-    console.error(`[hubot-logger] Failed to fetch room info for ${roomId}: ${err.message}`);
+    console.error(
+      `[hubot-logger] Failed to fetch room info for ${roomId}: ${err.message}`
+    );
     return { name: null, type: getSlackRoomType(roomId) };
   }
 }
 
 module.exports = (robot) => {
   if (robot.adapterName !== 'slack') {
-    console.log(`[hubot-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`);
+    console.log(
+      `[hubot-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`
+    );
     return;
   }
 
@@ -83,7 +87,7 @@ module.exports = (robot) => {
     const rawMessage = res?.message?.rawMessage;
     const roomId = res.message.room;
 
-    if (!rawMessage || typeof rawMessage !== 'object' || !roomId) return;
+    if (!rawMessage || typeof rawMessage !== 'object' || !roomId) {return;}
 
     try {
       const roomInfo = await getRoomInfo(roomId);
@@ -98,7 +102,9 @@ module.exports = (robot) => {
         timestamp: new Date().toISOString(),
         slackTimestamp: rawMessage.ts || null,
         threadTimestamp: rawMessage.thread_ts || null,
-        isThreadRoot: rawMessage.thread_ts ? rawMessage.thread_ts === rawMessage.ts : false,
+        isThreadRoot: rawMessage.thread_ts
+          ? rawMessage.thread_ts === rawMessage.ts
+          : false,
       };
 
       const line = JSON.stringify(message);
@@ -113,4 +119,3 @@ module.exports = (robot) => {
     }
   });
 };
-

@@ -20,4 +20,5 @@ set, it will log via `console.log` to stdout or whever the rest of your hubot
 logs are going.
 
 # License
+
 MIT
