@@ -15,6 +15,13 @@ const {
   WebClient
 } = require('@slack/web-api');
 
+// Put in some debugging
+module.exports = function(robot) {
+  robot.react((res) => {
+    console.log('Reaction event received:', res.message);
+  });
+};
+
 // Config
 const reactionsLogFilePath = process.env.HUBOT_SLACK_REACTIONS_LOGS_FILE || process.env.HUBOT_SLACK_LOGS_FILE;
 const slackToken = process.env.HUBOT_SLACK_TOKEN;
