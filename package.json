@@ -1,16 +1,16 @@
 {
   "name": "hubot-slacklogs",
-  "version": "0.0.3",
+  "version": "0.0.4",
   "description": "Log what's happening in slack in jsonl format",
   "main": "index.js",
-  "homepage": "https://github.com/stahnma/mandatoryFun/tree/main/hubot-modules/hubot-slacklogs",
+  "homepage": "https://github.com/stahnma/hubot-slacklogs",
   "scripts": {
     "test": "EXPRESS_PORT=9012 mocha  --extension mjs --verbose --exit \"test/**/*.*\" --reporter spec",
     "lint": "jshint src/*.js test/*.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/stahnma/mandatoryFun/tree/main/hubot-modules/hubot-slacklogs"
+    "url": "https://github.com/stahnma/hubot-slacklogs"
   },
   "keywords": [
     "hubot",
