@@ -3,7 +3,8 @@
 //
 // Configuration:
 //    HUBOT_SLACK_LOGS_FILE - absolute path to file where logs should be placed
-//    HUBOT_SLACK_TOKEN - needed to use slack API for room lookups, etc
+//    HUBOT_SLACK_BOT_TOKEN - only needed if the adapter doesn't expose a Slack web client
+//                            (HUBOT_SLACK_TOKEN is still read for older setups)
 //
 // Author: stahnma
 //
@@ -14,7 +15,7 @@ const { WebClient } = require('@slack/web-api');
 
 // Config
 const logFilePath = process.env.HUBOT_SLACK_LOGS_FILE;
-const slackToken = process.env.HUBOT_SLACK_TOKEN;
+const slackToken = process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
 
 let logStream = null;
 if (logFilePath) {
@@ -28,7 +29,7 @@ if (logFilePath) {
   }
 }
 
-const slackClient = slackToken ? new WebClient(slackToken) : null;
+let slackClient = slackToken ? new WebClient(slackToken) : null;
 
 // In-memory cache for room name/type
 const roomCache = new Map();
@@ -76,11 +77,16 @@ async function getRoomInfo(roomId) {
 }
 
 module.exports = (robot) => {
-  if (robot.adapterName !== 'slack') {
+  if (!/slack/i.test(robot.adapterName || '')) {
     console.log(
       `[hubot-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`
     );
     return;
+  }
+
+  // @hubot-friends/hubot-slack exposes its authenticated web client; prefer it.
+  if (robot.adapter?.client?.web) {
+    slackClient = robot.adapter.client.web;
   }
 
   robot.hear(/.*/, async (res) => {
