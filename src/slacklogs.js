@@ -23,6 +23,11 @@ if (logFilePath) {
     const dir = path.dirname(logFilePath);
     fs.mkdirSync(dir, { recursive: true });
     logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
+    // An unwritable file (e.g. permissions) must not crash the bot; log to stdout instead.
+    logStream.on('error', (err) => {
+      console.error(`[hubot-logger] Can't write ${logFilePath}, logging to stdout: ${err.message}`);
+      logStream = null;
+    });
     console.log(`[hubot-logger] Logging to file: ${logFilePath}`);
   } catch (err) {
     console.error(`[hubot-logger] Failed to set up log file: ${err.message}`);

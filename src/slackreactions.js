@@ -30,6 +30,13 @@ if (reactionsLogFilePath) {
     logStream = fs.createWriteStream(reactionsLogFilePath, {
       flags: 'a',
     });
+    // An unwritable file (e.g. permissions) must not crash the bot; log to stdout instead.
+    logStream.on('error', (err) => {
+      console.error(
+        `[hubot-reactions-logger] Can't write ${reactionsLogFilePath}, logging to stdout: ${err.message}`
+      );
+      logStream = null;
+    });
     console.log(
       `[hubot-reactions-logger] Logging to file: ${reactionsLogFilePath}`
     );
