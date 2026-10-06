@@ -4,7 +4,8 @@
 // Configuration:
 //    HUBOT_SLACK_REACTIONS_LOGS_FILE - absolute path to file where reactions logs should be placed
 //    HUBOT_SLACK_LOGS_FILE - fallback log file if reactions log file is not set
-//    HUBOT_SLACK_TOKEN - needed to use slack API for user lookups, etc
+//    HUBOT_SLACK_BOT_TOKEN - only needed if the adapter doesn't expose a Slack web client
+//                            (HUBOT_SLACK_TOKEN is still read for older setups)
 //
 // Author: stahnma
 //
@@ -17,7 +18,7 @@ const { WebClient } = require('@slack/web-api');
 const reactionsLogFilePath =
   process.env.HUBOT_SLACK_REACTIONS_LOGS_FILE ||
   process.env.HUBOT_SLACK_LOGS_FILE;
-const slackToken = process.env.HUBOT_SLACK_TOKEN;
+const slackToken = process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
 
 let logStream = null;
 if (reactionsLogFilePath) {
@@ -29,6 +30,13 @@ if (reactionsLogFilePath) {
     logStream = fs.createWriteStream(reactionsLogFilePath, {
       flags: 'a',
     });
+    // An unwritable file (e.g. permissions) must not crash the bot; log to stdout instead.
+    logStream.on('error', (err) => {
+      console.error(
+        `[hubot-reactions-logger] Can't write ${reactionsLogFilePath}, logging to stdout: ${err.message}`
+      );
+      logStream = null;
+    });
     console.log(
       `[hubot-reactions-logger] Logging to file: ${reactionsLogFilePath}`
     );
@@ -39,20 +47,26 @@ if (reactionsLogFilePath) {
   }
 }
 
-const slackClient = slackToken ? new WebClient(slackToken) : null;
+let slackClient = slackToken ? new WebClient(slackToken) : null;
 
 module.exports = (robot) => {
-  if (robot.adapterName !== 'slack') {
+  if (!/slack/i.test(robot.adapterName || '')) {
     robot.logger.info(
       `[hubot-reactions-logger] Adapter is '${robot.adapterName}', skipping Slack-specific logging.`
     );
     return;
   }
 
+  // @hubot-friends/hubot-slack exposes its authenticated web client; prefer it.
+  if (robot.adapter?.client?.web) {
+    slackClient = robot.adapter.client.web;
+  }
+
   robot.logger.info('[hubot-reactions-logger] Reaction logging enabled');
 
-  // Listen for reactions using robot.react
-  robot.react((res) => {
+  // @hubot-friends/hubot-slack calls this hearReaction; the old hubot-slack used react.
+  const listenForReactions = (robot.hearReaction || robot.react).bind(robot);
+  listenForReactions((res) => {
     handleReaction(res.message);
   });
 
