@@ -5,15 +5,15 @@
   "main": "index.js",
   "homepage": "https://github.com/stahnma/hubot-slacklogs",
   "scripts": {
-    "test": "EXPRESS_PORT=9012 mocha  --extension mjs --verbose --exit \"test/**/*.*\" --reporter spec",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "test": "npm run lint && npm run format:check"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/stahnma/hubot-slacklogs"
+    "url": "git+https://github.com/stahnma/hubot-slacklogs.git"
   },
   "keywords": [
     "hubot",
@@ -23,11 +23,21 @@
   "author": "stahnma",
   "license": "MIT",
   "dependencies": {
-    "@slack/web-api": "^7.9.1"
+    "@slack/web-api": "^8.2.0"
   },
   "devDependencies": {
-    "prettier": "^3.1.1",
-    "eslint": "^8.57.0",
-    "@eslint/js": "^9.0.0"
-  }
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.12.0",
+    "prettier": "^3.9.9"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "bugs": {
+    "url": "https://github.com/stahnma/hubot-slacklogs/issues"
+  },
+  "files": [
+    "index.js",
+    "src/"
+  ]
 }
