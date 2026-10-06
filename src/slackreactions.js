@@ -18,7 +18,8 @@ const { WebClient } = require('@slack/web-api');
 const reactionsLogFilePath =
   process.env.HUBOT_SLACK_REACTIONS_LOGS_FILE ||
   process.env.HUBOT_SLACK_LOGS_FILE;
-const slackToken = process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
+const slackToken =
+  process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
 
 let logStream = null;
 if (reactionsLogFilePath) {
@@ -76,7 +77,11 @@ module.exports = (robot) => {
       // Handle both Hubot ReactionMessage and raw Slack API formats
       let userId, item, emoji, reactionType;
 
-      if (reaction.user && typeof reaction.user === 'object' && reaction.user.id) {
+      if (
+        reaction.user &&
+        typeof reaction.user === 'object' &&
+        reaction.user.id
+      ) {
         // Hubot ReactionMessage format
         userId = reaction.user.id;
         item = reaction.item;
@@ -89,7 +94,10 @@ module.exports = (robot) => {
         emoji = reaction.reaction;
         reactionType = 'added'; // Default for raw format
       } else {
-        robot.logger.error('[hubot-reactions-logger] Unknown reaction format:', reaction);
+        robot.logger.error(
+          '[hubot-reactions-logger] Unknown reaction format:',
+          reaction
+        );
         return;
       }
 

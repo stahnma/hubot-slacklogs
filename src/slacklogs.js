@@ -15,7 +15,8 @@ const { WebClient } = require('@slack/web-api');
 
 // Config
 const logFilePath = process.env.HUBOT_SLACK_LOGS_FILE;
-const slackToken = process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
+const slackToken =
+  process.env.HUBOT_SLACK_BOT_TOKEN || process.env.HUBOT_SLACK_TOKEN;
 
 let logStream = null;
 if (logFilePath) {
@@ -25,7 +26,9 @@ if (logFilePath) {
     logStream = fs.createWriteStream(logFilePath, { flags: 'a' });
     // An unwritable file (e.g. permissions) must not crash the bot; log to stdout instead.
     logStream.on('error', (err) => {
-      console.error(`[hubot-logger] Can't write ${logFilePath}, logging to stdout: ${err.message}`);
+      console.error(
+        `[hubot-logger] Can't write ${logFilePath}, logging to stdout: ${err.message}`
+      );
       logStream = null;
     });
     console.log(`[hubot-logger] Logging to file: ${logFilePath}`);
@@ -40,12 +43,24 @@ let slackClient = slackToken ? new WebClient(slackToken) : null;
 const roomCache = new Map();
 
 function getSlackRoomType(roomId) {
-  if (!roomId || typeof roomId !== 'string') {return 'unknown';}
-  if (roomId.startsWith('C')) {return 'public_channel';}
-  if (roomId.startsWith('G')) {return 'private_channel';}
-  if (roomId.startsWith('D')) {return 'direct_message';}
-  if (roomId.startsWith('Q')) {return 'group_dm';}
-  if (roomId.startsWith('T')) {return 'external_dm';}
+  if (!roomId || typeof roomId !== 'string') {
+    return 'unknown';
+  }
+  if (roomId.startsWith('C')) {
+    return 'public_channel';
+  }
+  if (roomId.startsWith('G')) {
+    return 'private_channel';
+  }
+  if (roomId.startsWith('D')) {
+    return 'direct_message';
+  }
+  if (roomId.startsWith('Q')) {
+    return 'group_dm';
+  }
+  if (roomId.startsWith('T')) {
+    return 'external_dm';
+  }
   return 'unknown';
 }
 
@@ -98,7 +113,9 @@ module.exports = (robot) => {
     const rawMessage = res?.message?.rawMessage;
     const roomId = res.message.room;
 
-    if (!rawMessage || typeof rawMessage !== 'object' || !roomId) {return;}
+    if (!rawMessage || typeof rawMessage !== 'object' || !roomId) {
+      return;
+    }
 
     try {
       const roomInfo = await getRoomInfo(roomId);
